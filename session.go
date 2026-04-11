@@ -36,7 +36,7 @@ func (k *Kakera) CreateSession(ctx context.Context, filename string, totalSize i
 		ReceivedChunks: make(map[int]bool),
 		Status:         "uploading",
 		CreatedAt:      time.Now(),
-		ExpiredAt:      time.Now().Add(k.config.SessionTTL),
+		ExpiresAt:      time.Now().Add(k.config.SessionTTL),
 	}
 
 	if err := k.config.SessionStore.Create(ctx, session); err != nil {
@@ -52,7 +52,7 @@ func (k *Kakera) GetSession(ctx context.Context, sessionID string) (*Session, er
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	if time.Now().After(session.ExpiredAt) {
+	if time.Now().After(session.ExpiresAt) {
 		return nil, fmt.Errorf("session has expired")
 	}
 

@@ -17,5 +17,5 @@ type Session struct {
 	ReceivedChunks map[int]bool
 	Status         string
 	CreatedAt      time.Time
-	ExpiredAt      time.Time
+	ExpiresAt      time.Time
 }

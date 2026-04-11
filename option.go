@@ -10,6 +10,7 @@ type Config struct {
 	ChecksumType   string
 	Storage        Storage
 	SessionStore   SessionStore
+	OnProgress     ProgressFunc
 }
 
 type Option func(*Config)
@@ -53,5 +54,11 @@ func WithStorage(s Storage) Option {
 func WithSessionStore(s SessionStore) Option {
 	return func(c *Config) {
 		c.SessionStore = s
+	}
+}
+
+func WithOnProgress(fn ProgressFunc) Option {
+	return func(c *Config) {
+		c.OnProgress = fn
 	}
 }

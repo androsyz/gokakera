@@ -41,6 +41,18 @@ func (k *Kakera) UploadChunk(ctx context.Context, sessionID string, index int, d
 		return fmt.Errorf("failed to update session: %w", err)
 	}
 
+	if k.config.OnProgress != nil {
+		k.config.OnProgress(Progress{
+			SessionID:      sessionID,
+			ChunkIndex:     index,
+			ChunksReceived: len(session.ReceivedChunks),
+			TotalChunks:    session.TotalChunks,
+			BytesReceived:  int64(len(session.ReceivedChunks)) * k.config.ChunkSize,
+			TotalSize:      session.TotalSize,
+			Percentage:     float64(len(session.ReceivedChunks)) / float64(session.TotalChunks) * 100,
+		})
+	}
+
 	return nil
 }
 
