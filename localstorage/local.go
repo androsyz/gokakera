@@ -1,3 +1,6 @@
+// Package localstorage provides a local-filesystem Storage implementation.
+// Chunks are written under <basePath>/chunks/<sessionID>/<index>
+// and the assembled file is written to <basePath>/files/<sessionID>.
 package localstorage
 
 import (
@@ -8,10 +11,13 @@ import (
 	"path/filepath"
 )
 
+// LocalStorage is a gokakera.Storage implementation that stores chunks and assembled files on the local filesystem.
 type LocalStorage struct {
 	basePath string
 }
 
+// New returns a LocalStorage rooted at basePath.
+// The directory must be writable; required subdirectories are created on demand.
 func New(basePath string) *LocalStorage {
 	return &LocalStorage{
 		basePath: basePath,

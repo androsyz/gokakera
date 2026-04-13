@@ -1,5 +1,7 @@
 package gokakera
 
+// Progress carries upload progress information delivered to a ProgressFunc callback
+// after each successfully stored chunk.
 type Progress struct {
 	SessionID      string
 	ChunkIndex     int
@@ -10,4 +12,5 @@ type Progress struct {
 	Percentage     float64
 }
 
+// ProgressFunc is the callback type invoked after each chunk is successfully uploaded.
 type ProgressFunc func(Progress)

@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// StartCleanup launches a background goroutine that periodically deletes expired sessions
+// and their associated chunks. It stops when ctx is cancelled.
 func (k *Kakera) StartCleanup(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 

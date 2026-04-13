@@ -7,6 +7,13 @@ import (
 	"strconv"
 )
 
+// RegisterRoutes registers all HTTP handlers onto the given ServeMux.
+// Routes:
+//
+//	POST /upload/session              — create a new upload session
+//	PUT  /upload/{sessionID}/chunk/{index} — upload a single chunk
+//	POST /upload/{sessionID}/complete — assemble the file once all chunks are received
+//	GET  /upload/{sessionID}/status   — query session status and progress
 func (k *Kakera) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /upload/session", k.handleCreateSession)
 	mux.HandleFunc("PUT /upload/{sessionID}/chunk/{index}", k.handleUploadChunk)
@@ -23,6 +30,7 @@ func (k *Kakera) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
 	}
 
 	session, err := k.CreateSession(r.Context(), req.Filename, req.TotalSize)

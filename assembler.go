@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 )
 
+// AssembleFile streams all stored chunks in order into the final file via the Storage backend.
+// It transitions the session through "assembling" → "completed" (or "failed" on error).
+// Chunk data is cleaned up from storage after a successful assembly.
 func (k *Kakera) AssembleFile(ctx context.Context, sessionID string) error {
 	session, err := k.GetSession(ctx, sessionID)
 	if err != nil {
@@ -16,7 +20,7 @@ func (k *Kakera) AssembleFile(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("upload not complete: received %d of %d chunks", len(session.ReceivedChunks), session.TotalChunks)
 	}
 
-	session.Status = "assembling"
+	session.Status = StatusAssembling
 	if err := k.config.SessionStore.Update(ctx, session); err != nil {
 		return fmt.Errorf("failed to update session status: %w", err)
 	}
@@ -40,8 +44,10 @@ func (k *Kakera) AssembleFile(ctx context.Context, sessionID string) error {
 	}()
 
 	if err := k.config.Storage.AssembleFile(ctx, sessionID, session.TotalChunks, pr); err != nil {
-		session.Status = "failed"
-		k.config.SessionStore.Update(ctx, session)
+		session.Status = StatusFailed
+		if updateErr := k.config.SessionStore.Update(ctx, session); updateErr != nil {
+			log.Printf("gokakera: failed to mark session %s as failed: %v", sessionID, updateErr)
+		}
 		return fmt.Errorf("failed to assemble file: %w", err)
 	}
 
@@ -49,7 +55,7 @@ func (k *Kakera) AssembleFile(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("failed to cleanup chunks: %w", err)
 	}
 
-	session.Status = "completed"
+	session.Status = StatusCompleted
 	if err := k.config.SessionStore.Update(ctx, session); err != nil {
 		return fmt.Errorf("failed to update session status: %w", err)
 	}

@@ -5,13 +5,16 @@ import (
 	"fmt"
 )
 
+// UploadChunk stores a single chunk for an active session.
+// The call is idempotent: uploading a chunk that was already received succeeds without re-storing it.
+// It returns an error if the session is expired, the index is out of range, or the checksum does not match.
 func (k *Kakera) UploadChunk(ctx context.Context, sessionID string, index int, data []byte, checksum string) error {
 	session, err := k.GetSession(ctx, sessionID)
 	if err != nil {
 		return err
 	}
 
-	if session.Status != "uploading" {
+	if session.Status != StatusUploading {
 		return fmt.Errorf("session is not accepting chunks")
 	}
 
@@ -47,7 +50,7 @@ func (k *Kakera) UploadChunk(ctx context.Context, sessionID string, index int, d
 			ChunkIndex:     index,
 			ChunksReceived: len(session.ReceivedChunks),
 			TotalChunks:    session.TotalChunks,
-			BytesReceived:  int64(len(session.ReceivedChunks)) * k.config.ChunkSize,
+			BytesReceived:  min(int64(len(session.ReceivedChunks))*k.config.ChunkSize, session.TotalSize),
 			TotalSize:      session.TotalSize,
 			Percentage:     float64(len(session.ReceivedChunks)) / float64(session.TotalChunks) * 100,
 		})
@@ -56,6 +59,7 @@ func (k *Kakera) UploadChunk(ctx context.Context, sessionID string, index int, d
 	return nil
 }
 
+// IsUploadComplete reports whether all expected chunks have been received for the session.
 func (k *Kakera) IsUploadComplete(ctx context.Context, sessionID string) (bool, error) {
 	session, err := k.GetSession(ctx, sessionID)
 	if err != nil {

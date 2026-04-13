@@ -14,7 +14,7 @@ func (k *Kakera) computeChecksum(data []byte) (string, error) {
 	case "sha256":
 		return computeSHA256(data), nil
 	default:
-		return "", fmt.Errorf("unsupported checksumtype: %s", k.config.ChecksumType)
+		return "", fmt.Errorf("unsupported checksum type: %s", k.config.ChecksumType)
 	}
 }
 

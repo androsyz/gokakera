@@ -1,3 +1,5 @@
+// Package memorystore provides an in-memory SessionStore implementation backed by a sync.RWMutex-protected map.
+// It is suitable for testing and single-process deployments where persistence across restarts is not required.
 package memorystore
 
 import (
@@ -9,11 +11,13 @@ import (
 	"github.com/androsyz/gokakera"
 )
 
+// MemoryStore is a thread-safe, in-memory implementation of gokakera.SessionStore.
 type MemoryStore struct {
 	sessions map[string]*gokakera.Session
 	mu       sync.RWMutex
 }
 
+// New returns an empty MemoryStore ready for use.
 func New() *MemoryStore {
 	return &MemoryStore{
 		sessions: make(map[string]*gokakera.Session),
