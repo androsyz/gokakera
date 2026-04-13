@@ -9,6 +9,10 @@ import (
 // The call is idempotent: uploading a chunk that was already received succeeds without re-storing it.
 // It returns an error if the session is expired, the index is out of range, or the checksum does not match.
 func (k *Kakera) UploadChunk(ctx context.Context, sessionID string, index int, data []byte, checksum string) error {
+	mu := k.sessionMu(sessionID)
+	mu.Lock()
+	defer mu.Unlock()
+
 	session, err := k.GetSession(ctx, sessionID)
 	if err != nil {
 		return err

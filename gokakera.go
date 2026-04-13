@@ -2,7 +2,10 @@
 // checksum validation, progress tracking, and pluggable storage backends.
 package gokakera
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 const (
 	DefaultChunkSize      = 5 * 1024 * 1024         // 5MB
@@ -23,7 +26,13 @@ const (
 // Kakera is the main entry point for the chunked upload library.
 // It manages upload sessions, validates chunks, and coordinates storage.
 type Kakera struct {
-	config *Config
+	config       *Config
+	sessionLocks sync.Map // map[string]*sync.Mutex, one per active session
+}
+
+func (k *Kakera) sessionMu(id string) *sync.Mutex {
+	v, _ := k.sessionLocks.LoadOrStore(id, &sync.Mutex{})
+	return v.(*sync.Mutex)
 }
 
 // New creates a Kakera instance with the given options.
