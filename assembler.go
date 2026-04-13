@@ -26,22 +26,7 @@ func (k *Kakera) AssembleFile(ctx context.Context, sessionID string) error {
 	}
 
 	pr, pw := io.Pipe()
-
-	go func() {
-		defer pw.Close()
-		for i := 0; i < session.TotalChunks; i++ {
-			chunk, err := k.config.Storage.GetChunk(ctx, sessionID, i)
-			if err != nil {
-				pw.CloseWithError(fmt.Errorf("failed to get chunk %d: %w", i, err))
-				return
-			}
-
-			if _, err := pw.Write(chunk); err != nil {
-				pw.CloseWithError(err)
-				return
-			}
-		}
-	}()
+	go k.streamChunks(ctx, sessionID, session.TotalChunks, pw)
 
 	if err := k.config.Storage.AssembleFile(ctx, sessionID, session.TotalChunks, pr); err != nil {
 		session.Status = StatusFailed
@@ -61,4 +46,21 @@ func (k *Kakera) AssembleFile(ctx context.Context, sessionID string) error {
 	}
 
 	return nil
+}
+
+// streamChunks reads each chunk in order from storage and writes it to pw.
+// It is intended to run in a goroutine as the producer side of an io.Pipe.
+func (k *Kakera) streamChunks(ctx context.Context, sessionID string, totalChunks int, pw *io.PipeWriter) {
+	defer pw.Close()
+	for i := 0; i < totalChunks; i++ {
+		chunk, err := k.config.Storage.GetChunk(ctx, sessionID, i)
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("failed to get chunk %d: %w", i, err))
+			return
+		}
+		if _, err := pw.Write(chunk); err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+	}
 }
