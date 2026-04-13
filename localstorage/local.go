@@ -32,7 +32,7 @@ func (l *LocalStorage) StoreChunk(ctx context.Context, sessionID string, index i
 	return nil
 }
 
-func (l *LocalStorage) GetCHunk(ctx context.Context, sessionID string, index int) ([]byte, error) {
+func (l *LocalStorage) GetChunk(ctx context.Context, sessionID string, index int) ([]byte, error) {
 	path := filepath.Join(l.basePath, "chunks", sessionID, fmt.Sprintf("%d", index))
 	data, err := os.ReadFile(path)
 	if err != nil {
